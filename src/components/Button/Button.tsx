@@ -98,7 +98,7 @@ const ButtonThemeStyles = {
     pressedBackgroundColor: COLORS.LIGHT_GRAY,
     borderColor: COLORS.DARK_GRAY,
     pressedBorderColor: COLORS.DARK_GRAY,
-    titleColor: COLORS.DARK_GRAY,
+    titleColor: COLORS.WHITE,
     pressedTitleColor: COLORS.DARK_GRAY,
   },
 }

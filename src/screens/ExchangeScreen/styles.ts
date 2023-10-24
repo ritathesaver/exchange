@@ -3,37 +3,41 @@ import { StyleSheet } from 'react-native'
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
   },
   wrapper: {
     flex: 1,
     padding: 24,
     justifyContent: 'center',
   },
-  blockContainer: {
-    flexDirection: 'row',
+  textContainer: {
+    alignItems: 'center',
     paddingVertical: 12,
-    zIndex: 50,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  amount: {
+    fontSize: 18,
+    marginVertical: 10,
+  },
+  result: {
+    fontSize: 18,
+  },
+  currency: {
+    color: 'red',
   },
   textInput: {
+    width: '100%',
+    height: 40,
     borderColor: 'gray',
-    width: '50%',
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
-    backgroundColor: 'gray',
-  },
-  picker: {
-    width: '48%',
-    marginLeft: 5,
+    marginVertical: 24,
   },
   btn: {
-    paddingTop: 8,
-    paddingBottom: 16,
-    zIndex: 20,
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
+    paddingTop: 12,
+    paddingBottom: 48,
   },
 })

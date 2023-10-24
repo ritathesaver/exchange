@@ -1,22 +1,35 @@
 import { useNavigation } from '@react-navigation/native'
 import React, { FC, useEffect, useState } from 'react'
-import { SafeAreaView, TextInput, View } from 'react-native'
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  SafeAreaView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import DropDownPicker from 'react-native-dropdown-picker'
 import { getAllCurrencies, getEstimated } from '../../api/services'
 import Button from '../../components/Button/Button'
+import { ExchangeScreenNavigationProp } from '../../navigators/types'
 import { styles } from './styles'
 
 const StartScreen: FC = () => {
-  const navigation = useNavigation()
+  const navigation = useNavigation<ExchangeScreenNavigationProp>()
   const [allCurrencies, setAllCurrencies] = useState()
-  const [open, setOpen] = useState(false)
-  const [value, setValue] = useState('btc')
-  const [open2, setOpen2] = useState(false)
-  const [value2, setValue2] = useState('eth')
-  const [activeAmountField, setActiveAmountField] = useState('1') // Активное поле amount (1 или 2)
 
-  const [amount, setAmount] = useState('0.1')
-  const [amount2, setAmount2] = useState('')
+  const [openPickerFrom, setOpenPickerFrom] = useState(false)
+  const [openPickerTo, setOpenPickerTo] = useState(false)
+
+  const [currencyFrom, setCurrencyFrom] = useState('btc')
+  const [currencyTo, setCurrencyTo] = useState('eth')
+
+  const [amountFrom, setAmountFrom] = useState('0.1')
+  const [amountTo, setAmountTo] = useState('')
+
+  const [activeAmountField, setActiveAmountField] = useState('1')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -25,12 +38,13 @@ const StartScreen: FC = () => {
       const estimated = await getEstimated({
         params: {
           fixed: true,
-          currency_from: 'btc',
-          currency_to: 'eth',
-          amount: amount,
+          currency_from: currencyFrom,
+          currency_to: currencyTo,
+          amount: amountFrom,
         },
       })
-      setAmount2(estimated)
+      setIsLoading(false)
+      setAmountTo(estimated)
     })()
   }, [])
 
@@ -39,7 +53,6 @@ const StartScreen: FC = () => {
     val2: string,
     am1: string,
   ) => {
-    console.log(val1, val2)
     try {
       const estimated = await getEstimated({
         params: {
@@ -50,112 +63,125 @@ const StartScreen: FC = () => {
         },
       })
       if (activeAmountField === '1') {
-        setAmount2(estimated)
+        setAmountTo(estimated)
       } else if (activeAmountField === '2') {
-        setAmount(estimated)
+        setAmountFrom(estimated)
       }
+      setIsError(false)
     } catch (error) {
-      console.error('Произошла ошибка при расчете estimated amount:', error)
+      setIsError(true)
     }
   }
 
   useEffect(() => {
-    // Общий код для обработки изменений value1, value2, amount1 и amount2 и расчета estimated amount
-    calculateEstimatedAmount(value, value2, amount)
-  }, [value, value2, amount, amount2])
+    if (activeAmountField === '1') {
+      calculateEstimatedAmount(currencyFrom, currencyTo, amountFrom)
+    } else if (activeAmountField === '2') {
+      calculateEstimatedAmount(currencyTo, currencyFrom, amountTo)
+    }
+  }, [activeAmountField, currencyFrom, currencyTo, amountFrom, amountTo])
 
-  // Добавьте обработчик события для изменения amount2
-  const handleAmount2Change = (newAmount2: string) => {
+  const handleAmountToChange = (newAmountTo: string) => {
+    const numericInput = newAmountTo.replace(/[^0-9.]/g, '')
     setActiveAmountField('2')
-    setAmount2(newAmount2)
-    // Вызовите функцию для пересчета amount1
-    calculateEstimatedAmount(value, value2, amount)
+    setAmountTo(numericInput)
+    calculateEstimatedAmount(currencyTo, currencyFrom, amountTo)
   }
 
-  const handleAmount1Change = (newAmount1: string) => {
+  const handleAmountFromChange = (newAmountFrom: string) => {
+    const numericInput = newAmountFrom.replace(/[^0-9.]/g, '')
     setActiveAmountField('1')
-    setAmount(newAmount1)
-    // Вызовите функцию для пересчета amount2
-    calculateEstimatedAmount(value, value2, amount2)
+    setAmountFrom(numericInput)
+    calculateEstimatedAmount(currencyFrom, currencyTo, amountFrom)
   }
 
-  const [items, setItems] = useState<any>([])
+  const [pickerItems, setPickerItems] = useState<any>([])
   useEffect(() => {
     if (allCurrencies) {
-      setItems(allCurrencies)
+      setPickerItems(allCurrencies)
     }
   }, [allCurrencies])
 
-  const onNextPress = () => {}
+  const onNextPress = () => {
+    navigation.navigate('Exchange', {
+      currencyFrom,
+      currencyTo,
+      amountFrom,
+      amountTo,
+    })
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={{ flexDirection: 'row', paddingBottom: 40 }}>
-        <TextInput
-          value={amount}
-          onChangeText={handleAmount1Change}
-          keyboardType="decimal-pad"
-          maxLength={11}
-          allowFontScaling={false}
-          style={{
-            borderColor: 'gray',
-            width: '50%',
-            borderWidth: 1,
-            borderRadius: 10,
-            padding: 10,
-            backgroundColor: 'gray',
-          }}
-        />
+      {isLoading || !currencyFrom || !currencyTo ? (
+        <ActivityIndicator size={'large'} />
+      ) : (
+        <KeyboardAvoidingView behavior={'padding'} style={styles.wrapper}>
+          <View style={[styles.blockContainer, { zIndex: 100 }]}>
+            <TextInput
+              value={amountFrom}
+              onChangeText={handleAmountFromChange}
+              keyboardType="decimal-pad"
+              maxLength={15}
+              allowFontScaling={false}
+              style={styles.textInput}
+            />
 
-        <DropDownPicker
-          containerStyle={{ width: '50%' }}
-          schema={{
-            label: 'symbol',
-            value: 'symbol',
-          }}
-          searchable={true}
-          open={open}
-          value={value}
-          items={items}
-          setItems={setItems}
-          setOpen={setOpen}
-          setValue={setValue}
-        />
-      </View>
-      <View style={{ flexDirection: 'row' }}>
-        <TextInput
-          value={amount2}
-          onChangeText={handleAmount2Change}
-          keyboardType="decimal-pad"
-          maxLength={11}
-          allowFontScaling={false}
-          style={{
-            borderColor: 'gray',
-            width: '50%',
-            borderWidth: 1,
-            borderRadius: 10,
-            padding: 10,
-            backgroundColor: 'gray',
-          }}
-        />
-        <DropDownPicker
-          containerStyle={{ width: '50%' }}
-          schema={{
-            label: 'symbol',
-            value: 'symbol',
-          }}
-          searchable={true}
-          open={open2}
-          value={value2}
-          items={items}
-          setItems={setItems}
-          setOpen={setOpen2}
-          setValue={setValue2}
-        />
-      </View>
-      <View style={{ marginTop: 70 }}>
-        <Button title="Next" onPress={() => null} />
-      </View>
+            <DropDownPicker
+              zIndex={300}
+              containerStyle={styles.picker}
+              schema={{
+                label: 'symbol',
+                value: 'symbol',
+              }}
+              searchable={true}
+              open={openPickerFrom}
+              value={currencyFrom}
+              items={pickerItems}
+              setItems={setPickerItems}
+              setOpen={setOpenPickerFrom}
+              setValue={setCurrencyFrom}
+            />
+          </View>
+          <View style={styles.blockContainer}>
+            <TextInput
+              value={amountTo}
+              onChangeText={handleAmountToChange}
+              keyboardType="decimal-pad"
+              maxLength={15}
+              allowFontScaling={false}
+              style={styles.textInput}
+            />
+            <DropDownPicker
+              zIndex={300}
+              containerStyle={styles.picker}
+              schema={{
+                label: 'symbol',
+                value: 'symbol',
+              }}
+              searchable={true}
+              open={openPickerTo}
+              value={currencyTo}
+              items={pickerItems}
+              setItems={setPickerItems}
+              setOpen={setOpenPickerTo}
+              setValue={setCurrencyTo}
+            />
+          </View>
+          <View style={styles.btn}>
+            <Button
+              title="Next"
+              onPress={onNextPress}
+              disabled={isError || !amountTo || !amountFrom}
+            />
+          </View>
+          {isError && (
+            <Text style={styles.errorText}>
+              Something went wrong. Change the currency or amount and try again.
+            </Text>
+          )}
+        </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   )
 }
