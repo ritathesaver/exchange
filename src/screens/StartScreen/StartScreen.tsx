@@ -33,18 +33,23 @@ const StartScreen: FC = () => {
 
   useEffect(() => {
     ;(async () => {
-      const currencies = await getAllCurrencies()
-      setAllCurrencies(currencies)
-      const estimated = await getEstimated({
-        params: {
-          fixed: true,
-          currency_from: currencyFrom,
-          currency_to: currencyTo,
-          amount: amountFrom,
-        },
-      })
-      setIsLoading(false)
-      setAmountTo(estimated)
+      try {
+        const currencies = await getAllCurrencies()
+        setAllCurrencies(currencies)
+        const estimated = await getEstimated({
+          params: {
+            fixed: true,
+            currency_from: currencyFrom,
+            currency_to: currencyTo,
+            amount: amountFrom,
+          },
+        })
+        setIsLoading(false)
+        setAmountTo(estimated)
+      } catch (error) {
+        setIsError(true)
+        setIsLoading(false)
+      }
     })()
   }, [])
 

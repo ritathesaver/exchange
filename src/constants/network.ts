@@ -1,9 +1,8 @@
+import { API_KEY, BASE_URL } from '@env'
+
 export const HttpHeaders = {
   accept: 'application/json',
 }
-
-const API_KEY = '695894e7-c0d8-4b55-9af4-256fd5e835c8'
-const BASE_URL = 'https://api.simpleswap.io'
 
 export const ApiEndpoints = {
   BASE_URL,
